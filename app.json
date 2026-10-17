@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "Job Rotation",
+    "slug": "job-rotation-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.jobrotation.mobile" },
+    "android": { "package": "com.jobrotation.mobile" },
+    "plugins": ["expo-secure-store"]
+  }
+}
