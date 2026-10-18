@@ -14,13 +14,26 @@ export function formatarData(data) {
 
 export const formatarPeriodo = (inicio, fim) => `${formatarData(inicio)} → ${formatarData(fim)}`;
 
-export function nomeDoMembro(rodizio) {
+export function nomeDoMembroAtribuicao(atribuicao) {
   return (
-    rodizio?.membro?.usuario?.nome ||
-    rodizio?.membro?.nome ||
-    rodizio?.membro?.usuario?.email ||
-    "Membro"
+    atribuicao?.membro?.usuario?.nome ||
+    atribuicao?.membro?.usuario?.email ||
+    "Sem membro"
   );
+}
+
+export function nomeDaFuncaoAtribuicao(atribuicao) {
+  return atribuicao?.funcao?.nome || "Sem função";
+}
+
+// ISO -> "DD/MM/AAAA" (para preencher o campo de data ao editar).
+export function paraInputData(data) {
+  if (!data) return "";
+  const d = new Date(data);
+  if (Number.isNaN(d.getTime())) return "";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${d.getFullYear()}`;
 }
 
 // Máscara DD/MM/AAAA enquanto digita.
