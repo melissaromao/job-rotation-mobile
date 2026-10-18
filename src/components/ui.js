@@ -112,9 +112,9 @@ export function Chips({ label, options, value, onChange }) {
             <Pressable
               key={v}
               onPress={() => onChange(v)}
-              style={[s.chip, active && { backgroundColor: colors.ink }]}
+              style={[s.chip, active && { backgroundColor: colors.white, borderWidth: 3 }]}
             >
-              <Text style={[s.chipText, active && { color: colors.white }]}>{t}</Text>
+              <Text style={s.chipText}>{t}</Text>
             </Pressable>
           );
         })}
@@ -191,9 +191,9 @@ export function ConfirmModal({ visible, title, text, confirmLabel = "Excluir", l
       <View style={s.confirmWrap}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
         <HardShadow style={{ width: "100%", maxWidth: 380 }} radius={18}>
-          <View style={[s.card, { padding: 22, borderRadius: 18 }]}>
+          <View style={[s.card, { backgroundColor: colors.white, padding: 22, borderRadius: 18 }]}>
             <Text style={s.h3}>{title}</Text>
-            <Text style={{ color: colors.muted, marginTop: 8, lineHeight: 20 }}>{text}</Text>
+            <Text style={{ color: colors.ink, marginTop: 8, lineHeight: 20 }}>{text}</Text>
             <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
               <Button title="Cancelar" variant="light" onPress={onCancel} disabled={loading} style={{ flex: 1 }} />
               <Button title={confirmLabel} variant="danger" onPress={onConfirm} loading={loading} style={{ flex: 1 }} />
@@ -227,7 +227,7 @@ export function Loading({ text }) {
 }
 
 export const s = StyleSheet.create({
-  card: { backgroundColor: colors.white, borderWidth: 2, borderColor: colors.ink, borderRadius: 16, padding: 16 },
+  card: { borderWidth: 2, borderColor: colors.ink, borderRadius: 16, padding: 16 },
   btn: {
     minHeight: 50,
     borderRadius: 10,
@@ -240,7 +240,7 @@ export const s = StyleSheet.create({
   btnSmall: { minHeight: 40, paddingHorizontal: 14 },
   btnText: { fontWeight: "800", fontSize: 15 },
   label: { fontSize: 11, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6, color: colors.ink },
-  input: { backgroundColor: colors.white, borderBottomWidth: 2, borderBottomColor: colors.line, paddingVertical: 10, fontSize: 16, color: colors.ink },
+  input: { backgroundColor: colors.white, borderWidth: 1.5, borderColor: colors.line, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, color: colors.ink },
   errorBox: { borderWidth: 1.5, borderColor: colors.coral, backgroundColor: colors.errorBg, borderRadius: 10, padding: 12, marginBottom: 14 },
   errorText: { color: colors.errorText, fontWeight: "600", fontSize: 13, textAlign: "center" },
   toast: { backgroundColor: colors.lime, borderWidth: 2, borderColor: colors.ink, borderRadius: 12, padding: 12, marginBottom: 14 },
