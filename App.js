@@ -12,6 +12,7 @@ import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import MainScreen from "./src/screens/MainScreen";
 import OrganizacaoScreen from "./src/screens/OrganizacaoScreen";
+import RodizioScreen from "./src/screens/RodizioScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +34,7 @@ function Routes() {
           <>
             <Stack.Screen name="Main" component={MainScreen} />
             <Stack.Screen name="Organizacao" component={OrganizacaoScreen} />
+            <Stack.Screen name="Rodizio" component={RodizioScreen} />
           </>
         ) : (
           <>
