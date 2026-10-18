@@ -36,17 +36,17 @@ export default function RegisterScreen({ navigation }) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 20 }} keyboardShouldPersistTaps="handled">
           <HardShadow offset={9} radius={24}>
-            <View style={[s.card, { borderRadius: 24, padding: 24 }]}>
+            <View style={[s.card, { backgroundColor: colors.white, borderRadius: 24, padding: 24 }]}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.coral }} />
-                <Text style={{ fontSize: 12, fontWeight: "800", letterSpacing: 1.4, textTransform: "uppercase" }}>
+                <Text style={{ fontSize: 12, fontWeight: "800", letterSpacing: 1.4, textTransform: "uppercase", color: colors.ink }}>
                   Comece agora
                 </Text>
               </View>
-              <Text style={{ fontSize: 42, fontWeight: "800", letterSpacing: -2.2, lineHeight: 42 }}>
+              <Text style={{ fontSize: 42, fontWeight: "800", letterSpacing: -2.2, lineHeight: 42, color: colors.ink }}>
                 Crie sua{"\n"}conta.
               </Text>
-              <Text style={{ color: colors.muted, marginTop: 14, marginBottom: 24, lineHeight: 20 }}>
+              <Text style={{ color: colors.ink, marginTop: 14, marginBottom: 24, lineHeight: 20 }}>
                 Cadastre-se para criar sua organização e montar seus rodízios.
               </Text>
 
@@ -56,7 +56,7 @@ export default function RegisterScreen({ navigation }) {
               <ErrorBox message={errorMsg} />
               <Button title={loading ? "Cadastrando..." : "Criar minha conta →"} onPress={handleSubmit} loading={loading} />
               <Pressable onPress={() => navigation.replace("Login")} style={{ marginTop: 20 }}>
-                <Text style={{ textAlign: "center", color: colors.muted }}>
+                <Text style={{ textAlign: "center", color: colors.ink }}>
                   Já tem uma conta? <Text style={{ fontWeight: "800", color: colors.ink, textDecorationLine: "underline" }}>Entrar</Text>
                 </Text>
               </Pressable>

@@ -34,17 +34,17 @@ export default function LoginScreen({ navigation }) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 20 }} keyboardShouldPersistTaps="handled">
           <HardShadow offset={9} radius={24}>
-            <View style={[s.card, { borderRadius: 24, padding: 24 }]}>
+            <View style={[s.card, { backgroundColor: colors.white, borderRadius: 24, padding: 24 }]}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.lime }} />
-                <Text style={{ fontSize: 12, fontWeight: "800", letterSpacing: 1.4, textTransform: "uppercase" }}>
+                <Text style={{ fontSize: 12, fontWeight: "800", letterSpacing: 1.4, textTransform: "uppercase", color: colors.ink }}>
                   Bem-vindo de volta
                 </Text>
               </View>
-              <Text style={{ fontSize: 42, fontWeight: "800", letterSpacing: -2.2, lineHeight: 42 }}>
+              <Text style={{ fontSize: 42, fontWeight: "800", letterSpacing: -2.2, lineHeight: 42, color: colors.ink }}>
                 Entre na{"\n"}sua conta.
               </Text>
-              <Text style={{ color: colors.muted, marginTop: 14, marginBottom: 24, lineHeight: 20 }}>
+              <Text style={{ color: colors.ink, marginTop: 14, marginBottom: 24, lineHeight: 20 }}>
                 Acesse sua organização e continue organizando seus rodízios.
               </Text>
 
@@ -53,12 +53,12 @@ export default function LoginScreen({ navigation }) {
               <ErrorBox message={errorMsg} />
               <Button title={loading ? "Entrando..." : "Entrar →"} onPress={handleSubmit} loading={loading} />
               <Pressable onPress={() => navigation.replace("Register")} style={{ marginTop: 20 }}>
-                <Text style={{ textAlign: "center", fontWeight: "700", textDecorationLine: "underline" }}>
+                <Text style={{ textAlign: "center", fontWeight: "700", textDecorationLine: "underline", color: colors.ink }}>
                   Não tem uma conta? Cadastre-se
                 </Text>
               </Pressable>
               <Pressable onPress={() => navigation.navigate("Home")} style={{ marginTop: 14 }}>
-                <Text style={{ textAlign: "center", color: colors.muted, fontSize: 13 }}>← Voltar ao início</Text>
+                <Text style={{ textAlign: "center", color: colors.ink, fontSize: 13 }}>← Voltar ao início</Text>
               </Pressable>
             </View>
           </HardShadow>
