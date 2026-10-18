@@ -4,8 +4,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { api, getErrorMessage } from "../api";
 import { useAuth } from "../AuthContext";
 import { Avatar, Button, Card, Chips, ConfirmModal, Empty, ErrorBox, Field, Loading, Pill, Sheet } from "../components/ui";
-import { CICLOS, PERFIS, colors } from "../theme";
-import { formatarData, formatarPeriodo, mascaraData, nomeDoMembro, parseData } from "../utils";
+import { PERFIS, colors } from "../theme";
+import RodizioForm from "../components/RodizioForm";
+import { formatarPeriodo, nomeDaFuncaoAtribuicao, nomeDoMembroAtribuicao } from "../utils";
 
 const ABAS = [
   { key: "membros", label: "Membros", color: colors.coral },
@@ -41,13 +42,13 @@ function SectionHeader({ title, subtitle, actionLabel, onAction }) {
     <View style={{ marginBottom: 16 }}>
       <Text style={{ fontSize: 28, fontWeight: "800", letterSpacing: -1.2 }}>{title}</Text>
       <Text style={{ color: colors.muted, marginTop: 4, marginBottom: 12 }}>{subtitle}</Text>
-      <Button small title={actionLabel} onPress={onAction} />
+      {actionLabel && onAction && <Button small title={actionLabel} onPress={onAction} />}
     </View>
   );
 }
 
 /* ----------------------------- MEMBROS ----------------------------- */
-function MembrosTab({ orgId, lista }) {
+function MembrosTab({ orgId, lista, podeGerenciar }) {
   const { data: membros, loading, error, setError, carregar } = lista;
   const [addAberto, setAddAberto] = useState(false);
   const [email, setEmail] = useState("");
@@ -88,12 +89,21 @@ function MembrosTab({ orgId, lista }) {
 
   return (
     <View>
-      <SectionHeader title="Membros" subtitle="Pessoas que fazem parte desta organização." actionLabel="+ Adicionar membro" onAction={abrirAdd} />
+      <SectionHeader
+        title="Membros"
+        subtitle="Pessoas que fazem parte desta organização."
+        actionLabel={podeGerenciar ? "+ Adicionar membro" : null}
+        onAction={podeGerenciar ? abrirAdd : null}
+      />
       <ErrorBox message={error} />
       {loading ? (
         <Loading text="Carregando membros..." />
       ) : membros.length === 0 ? (
-        <Empty title="Nenhum membro" text="Ainda não há membros cadastrados nesta organização." action={<Button title="+ Adicionar membro" onPress={abrirAdd} />} />
+        <Empty
+          title="Nenhum membro"
+          text="Ainda não há membros cadastrados nesta organização."
+          action={podeGerenciar ? <Button title="+ Adicionar membro" onPress={abrirAdd} /> : null}
+        />
       ) : (
         <View style={{ gap: 12 }}>
           {membros.map((m, i) => {
@@ -109,32 +119,34 @@ function MembrosTab({ orgId, lista }) {
                   </View>
                   <Pill bg={m.perfil === "Administrador" ? colors.yellow : m.perfil === "Moderador" ? colors.blue : colors.lime}>{m.perfil || "Membro"}</Pill>
                 </View>
-                <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>
-                  <Button small variant="light" title="Editar perfil" style={{ flex: 1 }} onPress={() => { setEditando(m); setPerfilEditado(m.perfil || "Membro"); setError(""); }} />
-                  <Button small variant="danger" title="Remover" style={{ flex: 1 }} onPress={() => { setRemovendo(m); setError(""); }} />
-                </View>
+                {podeGerenciar && (
+                  <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>
+                    <Button small variant="light" title="Editar perfil" style={{ flex: 1 }} onPress={() => { setEditando(m); setPerfilEditado(m.perfil || "Membro"); setError(""); }} />
+                    <Button small variant="danger" title="Remover" style={{ flex: 1 }} onPress={() => { setRemovendo(m); setError(""); }} />
+                  </View>
+                )}
               </Card>
             );
           })}
         </View>
       )}
 
-      <Sheet visible={addAberto} title="Adicionar membro" onClose={() => !busy && setAddAberto(false)}>
+      <Sheet visible={podeGerenciar && addAberto} title="Adicionar membro" onClose={() => !busy && setAddAberto(false)}>
         <Field label="Email do membro" value={email} onChangeText={setEmail} keyboardType="email-address" placeholder="pessoa@email.com" />
         <Chips label="Perfil" options={PERFIS} value={perfil} onChange={setPerfil} />
         <ErrorBox message={error} />
         <Button title="Adicionar" onPress={adicionar} loading={busy} />
       </Sheet>
 
-      <Sheet visible={!!editando} title="Editar perfil" onClose={() => !busy && setEditando(null)}>
-        <Text style={{ marginBottom: 16, color: colors.muted }}>{editando?.usuario?.nome || editando?.nome}</Text>
+      <Sheet visible={podeGerenciar && !!editando} title="Editar perfil" onClose={() => !busy && setEditando(null)}>
+        <Text style={{ marginBottom: 16, color: colors.ink }}>{editando?.usuario?.nome || editando?.nome}</Text>
         <Chips label="Perfil" options={PERFIS} value={perfilEditado} onChange={setPerfilEditado} />
         <ErrorBox message={error} />
         <Button title="Salvar" onPress={editar} loading={busy} />
       </Sheet>
 
       <ConfirmModal
-        visible={!!removendo}
+        visible={podeGerenciar && !!removendo}
         title="Remover membro?"
         text={`${removendo?.usuario?.nome || removendo?.nome || "Este membro"} será removido da organização.`}
         confirmLabel="Remover"
@@ -147,7 +159,7 @@ function MembrosTab({ orgId, lista }) {
 }
 
 /* ----------------------------- FUNÇÕES ----------------------------- */
-function FuncoesTab({ orgId, lista }) {
+function FuncoesTab({ orgId, lista, podeGerenciar }) {
   const { data: funcoes, loading, error, setError, carregar } = lista;
   const [modo, setModo] = useState(null); // "add" | "edit"
   const [selecionada, setSelecionada] = useState(null);
@@ -200,105 +212,100 @@ function FuncoesTab({ orgId, lista }) {
 
   return (
     <View>
-      <SectionHeader title="Funções" subtitle="Responsabilidades que entram nos rodízios." actionLabel="+ Adicionar função" onAction={() => abrir("add")} />
+      <SectionHeader
+        title="Funções"
+        subtitle="Responsabilidades que entram nos rodízios."
+        actionLabel={podeGerenciar ? "+ Adicionar função" : null}
+        onAction={podeGerenciar ? () => abrir("add") : null}
+      />
       {!modo && <ErrorBox message={error} />}
       {loading ? (
         <Loading text="Carregando funções..." />
       ) : funcoes.length === 0 ? (
-        <Empty title="Nenhuma função" text="Cadastre as funções que fazem parte da rotina da organização." action={<Button title="+ Adicionar função" onPress={() => abrir("add")} />} />
+        <Empty
+          title="Nenhuma função"
+          text="Cadastre as funções que fazem parte da rotina da organização."
+          action={podeGerenciar ? <Button title="+ Adicionar função" onPress={() => abrir("add")} /> : null}
+        />
       ) : (
         <View style={{ gap: 12 }}>
           {funcoes.map((f) => (
             <Card key={f._id}>
               <Text style={{ fontWeight: "800", fontSize: 17, letterSpacing: -0.4 }}>{f.nome}</Text>
               <Text style={{ color: colors.muted, marginTop: 4, lineHeight: 20 }}>{f.descricao || "Nenhuma descrição informada."}</Text>
-              <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>
-                <Button small variant="light" title="Editar" style={{ flex: 1 }} onPress={() => abrir("edit", f)} />
-                <Button small variant="danger" title="Excluir" style={{ flex: 1 }} onPress={() => { setExcluir(f); setError(""); }} />
-              </View>
+              {podeGerenciar && (
+                <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>
+                  <Button small variant="light" title="Editar" style={{ flex: 1 }} onPress={() => abrir("edit", f)} />
+                  <Button small variant="danger" title="Excluir" style={{ flex: 1 }} onPress={() => { setExcluir(f); setError(""); }} />
+                </View>
+              )}
             </Card>
           ))}
         </View>
       )}
 
-      <Sheet visible={!!modo} title={modo === "edit" ? "Editar função" : "Adicionar função"} onClose={() => !busy && setModo(null)}>
+      <Sheet visible={podeGerenciar && !!modo} title={modo === "edit" ? "Editar função" : "Adicionar função"} onClose={() => !busy && setModo(null)}>
         <Field label="Nome" value={nome} onChangeText={setNome} autoCapitalize="sentences" placeholder="Ex.: Atendimento" />
         <Field label="Descrição (opcional)" value={descricao} onChangeText={setDescricao} autoCapitalize="sentences" multiline placeholder="O que essa função faz?" />
         <ErrorBox message={error} />
         <Button title={modo === "edit" ? "Salvar alterações" : "Cadastrar função"} onPress={salvar} loading={busy} />
       </Sheet>
 
-      <ConfirmModal visible={!!excluir} title="Excluir função?" text={`A função "${excluir?.nome}" será removida.`} loading={busy} onConfirm={confirmarExclusao} onCancel={() => !busy && setExcluir(null)} />
+      <ConfirmModal visible={podeGerenciar && !!excluir} title="Excluir função?" text={`A função "${excluir?.nome}" será removida.`} loading={busy} onConfirm={confirmarExclusao} onCancel={() => !busy && setExcluir(null)} />
     </View>
   );
 }
 
 /* ----------------------------- RODÍZIOS ----------------------------- */
-function RodiziosTab({ orgId, membros, funcoes, ativa }) {
-  const rodizios = useLista(`/organizacoes/${orgId}/rodizios`, ativa);
-  const minha = useLista(`/organizacoes/${orgId}/rodizios/minha`, ativa);
-  const [detalhe, setDetalhe] = useState(null);
-  const [loadingDetalhe, setLoadingDetalhe] = useState(false);
-  const [aberto, setAberto] = useState(false);
-  const [membro, setMembro] = useState("");
-  const [funcao, setFuncao] = useState("");
-  const [ciclo, setCiclo] = useState("Mensal");
-  const [inicio, setInicio] = useState("");
-  const [fim, setFim] = useState("");
+function RodiziosTab({ orgId, navigation, podeGerenciar }) {
+  const { usuario } = useAuth();
+  const rodizios = useLista(`/organizacoes/${orgId}/rodizios`);
+  const minha = useLista(`/organizacoes/${orgId}/rodizios/minha`);
+  const [formAberto, setFormAberto] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [formErro, setFormErro] = useState("");
 
-  const abrirDetalhe = async (id) => {
-    setLoadingDetalhe(true);
-    rodizios.setError("");
-    try {
-      const res = await api.get(`/organizacoes/${orgId}/rodizios/${id}`);
-      setDetalhe(res.data);
-    } catch (e) {
-      rodizios.setError(getErrorMessage(e, "Não foi possível carregar os detalhes do rodízio."));
-    } finally {
-      setLoadingDetalhe(false);
-    }
-  };
+  // Recarrega ao voltar da tela de detalhe (linhas/rotação podem ter mudado).
+  const { carregar: recarregarRodizios } = rodizios;
+  const { carregar: recarregarMinha } = minha;
+  useEffect(
+    () =>
+      navigation.addListener("focus", () => {
+        recarregarRodizios();
+        recarregarMinha();
+      }),
+    [navigation, recarregarRodizios, recarregarMinha]
+  );
 
-  const abrirAgendar = () => {
-    setMembro(""); setFuncao(""); setCiclo("Mensal"); setInicio(""); setFim("");
-    rodizios.setError("");
-    setAberto(true);
-  };
+  const abrirDetalhe = (id) => navigation.navigate("Rodizio", { orgId, rodizioId: id, podeGerenciar });
 
-  const agendar = async () => {
-    const err = (m) => rodizios.setError(m);
-    if (!membro) return err("Selecione o membro.");
-    if (!funcao) return err("Selecione a função.");
-    const dInicio = parseData(inicio);
-    const dFim = parseData(fim);
-    if (!inicio) return err("Informe a data de início.");
-    if (!fim) return err("Informe a data de término.");
-    if (!dInicio || !dFim) return err("Use datas válidas no formato DD/MM/AAAA.");
-    if (dInicio >= dFim) return err("A data de início deve ser anterior à data de término.");
+  const criar = async (dados) => {
     setBusy(true);
-    err("");
+    setFormErro("");
     try {
-      await api.post(`/organizacoes/${orgId}/rodizios`, {
-        membro, funcao, ciclo,
-        dataInicio: dInicio.toISOString(),
-        dataFim: dFim.toISOString(),
-      });
-      setAberto(false);
-      await Promise.all([rodizios.carregar(), minha.carregar()]);
+      const res = await api.post(`/organizacoes/${orgId}/rodizios`, dados);
+      setFormAberto(false);
+      const novo = res.data?.rodizio;
+      await Promise.all([recarregarRodizios(), recarregarMinha()]);
+      // O rodízio nasce sem linhas: leva direto para adicionar membros e funções.
+      if (novo?._id) abrirDetalhe(novo._id);
     } catch (e) {
-      err(e.response?.status === 409 ? "O membro já possui uma rotação neste período." : getErrorMessage(e, "Não foi possível agendar o rodízio."));
+      setFormErro(getErrorMessage(e, "Não foi possível criar o rodízio."));
     } finally {
       setBusy(false);
     }
   };
 
-  const optMembros = membros.map((m) => ({ value: m._id, label: m.usuario?.nome || m.nome || m.usuario?.email || "Membro" }));
-  const optFuncoes = funcoes.map((f) => ({ value: f._id, label: f.nome }));
+  // Linhas (membro → função) do usuário logado em cada rodízio ativo.
+  const minhasLinhas = (r) => (r.atribuicoes || []).filter((a) => a.membro?.usuario?._id && a.membro.usuario._id === usuario?._id);
 
   return (
     <View>
-      <SectionHeader title="Rodízios" subtitle="Quem assume cada função, e quando." actionLabel="+ Agendar rodízio" onAction={abrirAgendar} />
+      <View style={{ marginBottom: 16 }}>
+        <Text style={{ fontSize: 28, fontWeight: "800", letterSpacing: -1.2 }}>Rodízios</Text>
+        <Text style={{ color: colors.muted, marginTop: 4, marginBottom: 12 }}>Rotacionando membros por funções.</Text>
+        {podeGerenciar && <Button small title="+ Novo rodízio" onPress={() => { setFormErro(""); setFormAberto(true); }} />}
+      </View>
 
       <Card bg={colors.paper} style={{ marginBottom: 22 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -313,82 +320,75 @@ function RodiziosTab({ orgId, membros, funcoes, ativa }) {
           <Text style={{ color: colors.muted, lineHeight: 20 }}>Você não possui uma rotação ativa neste momento.</Text>
         ) : (
           <View style={{ gap: 12 }}>
-            {minha.data.map((r) => (
-              <Card key={r._id}>
-                <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase", color: colors.muted }}>Função atual</Text>
-                <Text style={{ fontSize: 20, fontWeight: "800", letterSpacing: -0.5, marginTop: 2 }}>{r.funcao?.nome || "Função não informada"}</Text>
-                <View style={{ marginTop: 8 }}><Pill>{r.ciclo || "Mensal"}</Pill></View>
-                <Text style={{ marginTop: 12, fontWeight: "600" }}>{formatarPeriodo(r.dataInicio, r.dataFim)}</Text>
-              </Card>
-            ))}
+            {minha.data.map((r) => {
+              const linhas = minhasLinhas(r);
+              return (
+                <Pressable key={r._id} onPress={() => abrirDetalhe(r._id)}>
+                  <Card>
+                    <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase", color: colors.muted }}>Função atual</Text>
+                    {linhas.length === 0 ? (
+                      <Text style={{ fontSize: 17, fontWeight: "700", marginTop: 2, color: colors.muted }}>Função não informada</Text>
+                    ) : (
+                      linhas.map((a) => (
+                        <Text key={a._id} style={{ fontSize: 20, fontWeight: "800", letterSpacing: -0.5, marginTop: 2 }}>
+                          {nomeDaFuncaoAtribuicao(a)}
+                        </Text>
+                      ))
+                    )}
+                    <View style={{ marginTop: 8 }}><Pill>{r.ciclo || "Mensal"}</Pill></View>
+                    <Text style={{ marginTop: 12, fontWeight: "600" }}>{formatarPeriodo(r.dataInicio, r.dataFim)}</Text>
+                  </Card>
+                </Pressable>
+              );
+            })}
           </View>
         )}
       </Card>
 
-      <ErrorBox message={!aberto ? rodizios.error : ""} />
+      <ErrorBox message={rodizios.error} />
       {rodizios.loading ? (
         <Loading text="Carregando rodízios..." />
       ) : rodizios.data.length === 0 ? (
-        <Empty title="Nenhum rodízio" text="Agende o primeiro rodízio escolhendo um membro, uma função e o período." action={<Button title="+ Agendar rodízio" onPress={abrirAgendar} />} />
+        <Empty
+          title="Nenhum rodízio"
+          text={podeGerenciar ? "Crie um rodízio e depois adicione as linhas de membro e função." : "Ainda não há rodízios nesta organização."}
+          action={podeGerenciar ? <Button title="+ Novo rodízio" onPress={() => { setFormErro(""); setFormAberto(true); }} /> : null}
+        />
       ) : (
         <View style={{ gap: 12 }}>
-          {rodizios.data.map((r) => (
-            <Pressable key={r._id} onPress={() => abrirDetalhe(r._id)}>
-              <Card>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                  <Avatar nome={nomeDoMembro(r)} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: "800", fontSize: 15 }} numberOfLines={1}>{nomeDoMembro(r)}</Text>
-                    <Text style={{ color: colors.muted, fontSize: 13 }} numberOfLines={1}>{r.funcao?.nome || "Função não informada"}</Text>
+          {rodizios.data.map((r) => {
+            const linhas = r.atribuicoes || [];
+            return (
+              <Pressable key={r._id} onPress={() => abrirDetalhe(r._id)}>
+                <Card>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <Pill bg={colors.blue}>{r.ciclo || "Mensal"}</Pill>
+                    <Text style={{ color: colors.muted, fontSize: 12, fontWeight: "700" }}>
+                      {linhas.length} {linhas.length === 1 ? "linha" : "linhas"}
+                    </Text>
                   </View>
-                  <Pill bg={colors.blue}>{r.ciclo || "Mensal"}</Pill>
-                </View>
-                <Text style={{ marginTop: 12, fontSize: 13, fontWeight: "600" }}>{formatarPeriodo(r.dataInicio, r.dataFim)}</Text>
-              </Card>
-            </Pressable>
-          ))}
+                  <Text style={{ marginTop: 10, fontSize: 15, fontWeight: "800" }}>{formatarPeriodo(r.dataInicio, r.dataFim)}</Text>
+                  {linhas.length === 0 ? (
+                    <Text style={{ color: colors.muted, marginTop: 8, fontSize: 13 }}>Nenhum membro ou função ainda.</Text>
+                  ) : (
+                    <View style={{ marginTop: 10, gap: 4 }}>
+                      {linhas.slice(0, 3).map((a) => (
+                        <Text key={a._id} style={{ fontSize: 13 }} numberOfLines={1}>
+                          <Text style={{ fontWeight: "700" }}>{nomeDoMembroAtribuicao(a)}</Text>
+                          <Text style={{ color: colors.muted }}> → {nomeDaFuncaoAtribuicao(a)}</Text>
+                        </Text>
+                      ))}
+                      {linhas.length > 3 && <Text style={{ color: colors.muted, fontSize: 12 }}>+ {linhas.length - 3} mais</Text>}
+                    </View>
+                  )}
+                </Card>
+              </Pressable>
+            );
+          })}
         </View>
       )}
-      {loadingDetalhe && <Loading />}
 
-      <Sheet visible={!!detalhe} title="Detalhes do rodízio" onClose={() => setDetalhe(null)}>
-        {detalhe && (
-          <View style={{ gap: 14 }}>
-            <Row label="Membro" value={nomeDoMembro(detalhe)} />
-            <Row label="Função" value={detalhe.funcao?.nome || "Função não informada"} />
-            <Row label="Ciclo" value={detalhe.ciclo || "Mensal"} />
-            <Row label="Início" value={formatarData(detalhe.dataInicio)} />
-            <Row label="Término" value={formatarData(detalhe.dataFim)} />
-          </View>
-        )}
-      </Sheet>
-
-      <Sheet visible={aberto} title="Agendar rodízio" onClose={() => !busy && setAberto(false)}>
-        {optMembros.length === 0 || optFuncoes.length === 0 ? (
-          <Text style={{ color: colors.muted, lineHeight: 20, marginBottom: 16 }}>
-            Para agendar um rodízio, cadastre antes pelo menos um membro e uma função.
-          </Text>
-        ) : (
-          <>
-            <Chips label="Membro" options={optMembros} value={membro} onChange={setMembro} />
-            <Chips label="Função" options={optFuncoes} value={funcao} onChange={setFuncao} />
-            <Chips label="Ciclo" options={CICLOS} value={ciclo} onChange={setCiclo} />
-            <Field label="Data de início" value={inicio} onChangeText={(t) => setInicio(mascaraData(t))} keyboardType="number-pad" placeholder="DD/MM/AAAA" />
-            <Field label="Data de término" value={fim} onChangeText={(t) => setFim(mascaraData(t))} keyboardType="number-pad" placeholder="DD/MM/AAAA" />
-          </>
-        )}
-        <ErrorBox message={rodizios.error} />
-        {optMembros.length > 0 && optFuncoes.length > 0 && <Button title="Agendar rodízio" onPress={agendar} loading={busy} />}
-      </Sheet>
-    </View>
-  );
-}
-
-function Row({ label, value }) {
-  return (
-    <View>
-      <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase", color: colors.muted }}>{label}</Text>
-      <Text style={{ fontSize: 17, fontWeight: "700", marginTop: 2 }}>{value}</Text>
+      <RodizioForm visible={formAberto} titulo="Novo rodízio" loading={busy} error={formErro} onClose={() => setFormAberto(false)} onSubmit={criar} />
     </View>
   );
 }
@@ -429,6 +429,10 @@ export default function OrganizacaoScreen({ route, navigation }) {
     setRefreshing(false);
   };
 
+  // Só Administrador/Moderador criam, editam e rotacionam rodízios (regra do backend).
+  const meuMembro = membros.data.find((m) => m.usuario?._id && m.usuario._id === usuario?._id);
+  const podeGerenciar = ["Administrador", "Moderador"].includes(meuMembro?.perfil);
+
   const titulo = organizacao?.nome || nomeInicial || "Organização";
 
   return (
@@ -463,9 +467,9 @@ export default function OrganizacaoScreen({ route, navigation }) {
               ))}
             </View>
 
-            {aba === "membros" && <MembrosTab orgId={id} lista={membros} />}
-            {aba === "funcoes" && <FuncoesTab orgId={id} lista={funcoes} />}
-            {aba === "rodizios" && <RodiziosTab orgId={id} membros={membros.data} funcoes={funcoes.data} ativa />}
+            {aba === "membros" && <MembrosTab orgId={id} lista={membros} podeGerenciar={podeGerenciar} />}
+            {aba === "funcoes" && <FuncoesTab orgId={id} lista={funcoes} podeGerenciar={podeGerenciar} />}
+            {aba === "rodizios" && <RodiziosTab orgId={id} navigation={navigation} podeGerenciar={podeGerenciar} />}
           </>
         )}
       </ScrollView>
